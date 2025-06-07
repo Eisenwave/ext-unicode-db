@@ -330,7 +330,7 @@ int main(int argc, char** argv) {
         fmt::print("Used Substrings : {}\n", weighted_substrings.size());
         const auto count = std::size_t(1 + 0.01 * double(weighted_substrings.size()));
         fmt::print("{}", count);
-        std::partial_sort(std::execution::par_unseq,
+        std::partial_sort(
             std::begin(weighted_substrings),
             std::begin(weighted_substrings) + count + 1,
             std::end(weighted_substrings), [](const auto & a, const auto &b ) {
@@ -341,7 +341,7 @@ int main(int argc, char** argv) {
             weighted_substrings | ranges::views::take(count) |
             ranges::views::transform([](const auto& p) { return p.first; }) | ranges::to<std::vector<std::string_view>>;
 
-        std::partial_sort(std::execution::par_unseq,
+        std::partial_sort(
             std::begin(filtered),
             std::begin(filtered) + 11,
             std::end(filtered), [](const auto & a, const auto &b ) {
