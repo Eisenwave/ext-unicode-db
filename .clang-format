@@ -39,7 +39,6 @@ IndentWidth: 4
 UseTab: Never
 ColumnLimit: 100
 IndentPPDirectives: AfterHash
-BreakConstructorInitializers: AfterColon
 ConstructorInitializerIndentWidth: 4
 IncludeBlocks: Regroup
 BraceWrapping:
