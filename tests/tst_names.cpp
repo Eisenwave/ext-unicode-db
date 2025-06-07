@@ -2,7 +2,6 @@
 #include <cedilla/name_to_cp.hpp>
 #include <cedilla/cp_to_name.hpp>
 #include <iostream>
-#include <fmt/format.h>
 #include <set>
 #include "common.h"
 #include <catch2/catch.hpp>
@@ -36,8 +35,11 @@ TEST_CASE("Verify that all code point have the same name as in the DB") {
                 continue;
             const auto & name = it->second.name;
             const auto res = uni::cp_name(c).to_string();
-            fmt::print("{:0x} :  expected {} found {}\n", uint32_t(c)
-            , name, res );
+            // We do not use std::print here because these tests are compiled in C++17
+            // to verify compatibility, unlike the rest of the project.
+            std::cout << std::hex << std::uint32_t(c)
+                      << " : expected " << name
+                      << " found " << res << '\n';
             CHECK(res == name);
         }
     }
