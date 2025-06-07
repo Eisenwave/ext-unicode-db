@@ -9,6 +9,7 @@
 #include <string>
 #include <mutex>
 #include <print>
+#include <cassert>
 
 namespace ranges = std::ranges;
 
@@ -323,9 +324,10 @@ int main(int argc, char** argv) {
             weighted_substrings | ranges::views::take(count) |
             ranges::views::transform([](const auto& p) { return p.first; }) | ranges::to<std::vector<std::string_view>>();
 
+        auto filtered_middle = std::min(std::ptrdiff_t(11), std::ptrdiff_t(filtered.size()));
         std::partial_sort(
             std::begin(filtered),
-            std::begin(filtered) + 11,
+            std::begin(filtered) + filtered_middle,
             std::end(filtered), [](const auto & a, const auto &b ) {
                 return a.size() > b.size();
             }
