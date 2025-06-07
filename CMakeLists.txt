@@ -11,22 +11,18 @@ message("-- Found Python ${Python3_EXECUTABLE}")
 
 include(cmake/unicode_data.cmake)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(namesgen tools/names.cpp)
 
 find_package(Threads REQUIRED)
-find_package(TBB CONFIG REQUIRED)
-find_package(range-v3 CONFIG REQUIRED)
-find_package(fmt CONFIG REQUIRED)
 find_package(pugixml CONFIG REQUIRED)
 
 target_link_libraries(namesgen PRIVATE
   Threads::Threads
   pugixml
-  fmt::fmt
-  TBB::tbb
-  range-v3-concepts
 )
 
 SET(HEADERS_DIR ${PROJECT_BINARY_DIR}/include/cedilla/)
@@ -37,9 +33,6 @@ add_executable(namesreversegen
 
 target_link_libraries(namesreversegen PRIVATE
   pugixml
-  fmt::fmt
-  TBB::tbb
-  range-v3-concepts
   Threads::Threads
 )
 target_compile_options(namesreversegen PRIVATE "-fopenmp-simd" "-march=native")

@@ -1,11 +1,8 @@
 {
-    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
     "name": "pacman",
     "version": "0.1",
     "dependencies": [
-        "tbb",
-        "range-v3",
-        "fmt",
         "catch2",
         "pugixml"
     ]
