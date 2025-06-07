@@ -1,13 +1,15 @@
 #include <string_view>
 #include <tuple>
 #include <charconv>
+#include <cstdint>
+
 namespace uni {
     namespace details {
         struct node {
             char32_t value  = 0xFFFFFF;
-            uint32_t children_offset = 0;
+            std::uint32_t children_offset = 0;
             bool has_sibling = false;
-            uint32_t size = 0;
+            std::uint32_t size = 0;
             std::string_view name;
 
 
@@ -18,20 +20,20 @@ namespace uni {
                 return children_offset != 0;
             }
         };
-        constexpr node read_node(uint32_t offset) {
+        constexpr node read_node(std::uint32_t offset) {
             using namespace uni::details;
             const uint32_t origin = offset;
             node n;
 
-            uint8_t name = index[offset++];
+            std::uint8_t name = index[offset++];
             if(offset + 6 >= sizeof(index))
                 return n;
 
             const bool long_name = name & 0x40;
             const bool has_value = name & 0x80;
-            name &= ~0xC0;
+            name = std::uint8_t(name & ~0xC0);
             if(long_name) {
-                uint32_t name_offset = (index[offset++] << 8u);
+                std::uint32_t name_offset = (index[offset++] << 8u);
                 name_offset |= index[offset++];
                 n.name = std::string_view(dict + name_offset, name);
             }
@@ -39,28 +41,28 @@ namespace uni {
                n.name = std::string_view(dict + name, 1);
             }
             if(has_value) {
-                uint8_t h = index[offset++];
-                uint8_t m = index[offset++];
-                uint8_t l = index[offset++];
+                std::uint8_t h = index[offset++];
+                std::uint8_t m = index[offset++];
+                std::uint8_t l = index[offset++];
                 n.value = uint32_t((h << 16u) | (m << 8u) | l) >> 3u;
 
                 bool has_children = l & 0x02;
                 n.has_sibling = l & 0x01;
 
                 if(has_children) {
-                    n.children_offset  = uint32_t(index[offset++] << 16u);
-                    n.children_offset |= uint32_t(index[offset++] << 8u);
+                    n.children_offset  = std::uint32_t(index[offset++] << 16u);
+                    n.children_offset |= std::uint32_t(index[offset++] << 8u);
                     n.children_offset |= index[offset++];
                 }
             }
             else {
-                uint8_t h = index[offset++];
+                std::uint8_t h = index[offset++];
                 n.has_sibling = h & 0x80;
                 bool has_children = h & 0x40;
-                h &= ~0xC0;
+                h = std::uint8_t(name & ~0xC0);
                 if(has_children) {
                     n.children_offset = (h << 16u);
-                    n.children_offset |= (uint32_t(index[offset++]) << 8u);
+                    n.children_offset |= (std::uint32_t(index[offset++]) << 8u);
                     n.children_offset |= index[offset++];
                 }
             }
@@ -69,7 +71,7 @@ namespace uni {
         }
 
 
-        constexpr int compare(std::string_view str, std::string_view needle, uint32_t start) {
+        constexpr int compare(std::string_view str, std::string_view needle, std::uint32_t start) {
             std::size_t str_i = start;
             std::size_t needle_i = 0;
             if(needle.size() == 0)
@@ -101,14 +103,14 @@ namespace uni {
             return -1;
         }
 
-        constexpr std::tuple<node, bool, uint32_t>
-        compare_node(uint32_t offset, std::string_view name, uint32_t start = 0) {
+        constexpr std::tuple<node, bool, std::uint32_t>
+        compare_node(std::uint32_t offset, std::string_view name, std::uint32_t start = 0) {
             auto n = details::read_node(offset);
             auto cmp = details::compare(name, n.name, start);
             if(cmp == -1) {
                 return {n, false, 0};
             }
-            start = uint32_t(cmp);
+            start = std::uint32_t(cmp);
             if(name.size() == start)
                 return {n, true, n.value};
             if(n.has_children()) {
@@ -159,8 +161,8 @@ namespace uni {
 
         struct generated_name_data {
             std::string_view prefix;
-            uint32_t start;
-            uint32_t end;
+            std::uint32_t start;
+            std::uint32_t end;
         };
 
         constexpr const generated_name_data generated_name_data_table[] = {
@@ -183,7 +185,7 @@ namespace uni {
             return str.size() >= needle.size() && str.compare(0, needle.size(), needle) == 0;
         }
 
-        constexpr uint32_t find_syllable(std::string_view str, int & pos, int count, int column) {
+        constexpr std::uint32_t find_syllable(std::string_view str, int & pos, int count, int column) {
             int len = -1;
             for (int i = 0; i < count; i++) {
                 std::string_view s(hangul_syllables[i][column]);
@@ -196,18 +198,18 @@ namespace uni {
             }
             if (len == -1)
                 len = 0;
-            return uint32_t(len);
+            return std::uint32_t(len);
         }
 
         constexpr const char32_t SBase = 0xAC00;
         constexpr const char32_t LBase = 0x1100;
         constexpr const char32_t VBase = 0x1161;
         constexpr const char32_t TBase = 0x11A7;
-        constexpr const uint32_t LCount = 19;
-        constexpr const uint32_t VCount = 21;
-        constexpr const uint32_t TCount = 28;
-        constexpr const uint32_t NCount = (VCount * TCount);
-        constexpr const uint32_t SCount = (LCount * NCount);
+        constexpr const std::uint32_t LCount = 19;
+        constexpr const std::uint32_t VCount = 21;
+        constexpr const std::uint32_t TCount = 28;
+        constexpr const std::uint32_t NCount = (VCount * TCount);
+        constexpr const std::uint32_t SCount = (LCount * NCount);
     }
 
 
@@ -230,7 +232,7 @@ namespace uni {
             if (starts_with(name, item.prefix)) {
                 auto gn = name;
                 gn.remove_prefix(item.prefix.size());
-                uint32_t v = 0;
+                std::uint32_t v = 0;
                 const auto end = gn.data() + gn.size();
                 auto [p, ec] = std::from_chars(gn.data(), end , v, 16);
                 if(ec != std::errc() || p != end || v < item.start || v > item.end)
@@ -239,7 +241,7 @@ namespace uni {
             }
         }
 
-        uint32_t offset = 0;
+        std::uint32_t offset = 0;
         for(;;) {
             auto [n, res, value] = details::compare_node(offset, name);
             if(!n.is_valid())

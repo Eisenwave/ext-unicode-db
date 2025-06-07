@@ -1,5 +1,6 @@
 #pragma once
 #include <string_view>
+#include <cstdint>
 
 #ifndef CTRE_UNICODE_SYNOPSYS_WAS_INCLUDED
 namespace uni
@@ -48,10 +49,10 @@ namespace uni
 
     protected:
         constexpr numeric_value() = default;
-        constexpr numeric_value(long long n, int16_t d);
+        constexpr numeric_value(long long n, std::int16_t d);
 
         long long _n = 0;
-        int16_t _d = 0;
+        std::int16_t _d = 0;
         friend constexpr numeric_value cp_numeric_value(char32_t cp);
     };
 
