@@ -1,32 +1,18 @@
 #include "pugixml.hpp"
+#include <algorithm>
+#include <ranges>
 #include <unordered_map>
-#include <map>
-#include <unordered_set>
 #include <string>
-#include <iostream>
 #include <deque>
-#include <charconv>
 #include <utility>
 #include <vector>
 #include <string>
 #include <set>
-#include <fmt/ranges.h>
-#include <fmt/ostream.h>
-#include <fmt/format.h>
 #include <optional>
-#include <range/v3/view/transform.hpp>
-#include <range/v3/view/iota.hpp>
-#include <range/v3/view/enumerate.hpp>
-#include <range/v3/range/conversion.hpp>
-#include <range/v3/algorithm/any_of.hpp>
-#include <range/v3/algorithm/sort.hpp>
-#include <range/v3/algorithm/find.hpp>
-#include <range/v3/algorithm/find_if.hpp>
-#include <range/v3/algorithm/remove_if.hpp>
-#include <locale>
-#include "range/v3/view/span.hpp"
+#include <memory>
+#include <print>
 
-#include <mutex>
+namespace ranges = std::ranges;
 
 bool generated(char32_t c) {
     const std::array ranges = {
@@ -141,7 +127,7 @@ public:
         bytes.reserve(250'000);
 
         auto add_children = [&sibling_nodes, &nodes](auto && container) {
-            for(auto && [idx, c] : ranges::view::enumerate(container)) {
+            for(auto && [idx, c] : ranges::views::enumerate(container)) {
                 nodes.push_back(c.get());
                 if(idx != container.size() - 1)
                     sibling_nodes[c.get()] = true;
@@ -294,16 +280,16 @@ int main(int argc, char** argv) {
     }
     t.compact();
     auto [dict, bytes] = t.dump();
-    fmt::print("//dict : {} / tree : {} \n", dict.size()/1024, bytes.size()/1024);
+    std::print("//dict : {} / tree : {} \n", dict.size()/1024, bytes.size()/1024);
 
 
-    fmt::print("#pragma once\n");
-    fmt::print("#include <cstdint>\n");
-    fmt::print("namespace uni::details {{\n");
-    fmt::print("constexpr const char* dict = \"{}\";\n", dict);
-    fmt::print("constexpr const uint8_t index[] = {{\n");
+    std::print("#pragma once\n");
+    std::print("#include <cstdint>\n");
+    std::print("namespace uni::details {{\n");
+    std::print("constexpr const char* dict = \"{}\";\n", dict);
+    std::print("constexpr const uint8_t index[] = {{\n");
     for(auto b : bytes) {
-        fmt::print("0x{:02x},", b);
+        std::print("0x{:02x},", b);
     }
-    fmt::print("0}};\n}}\n");
+    std::print("0}};\n}}\n");
 }

@@ -1,34 +1,16 @@
 #include "pugixml.hpp"
+#include <algorithm>
+#include <ranges>
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
-#include <iostream>
-#include <charconv>
 #include <utility>
 #include <vector>
 #include <string>
-#include <execution>
-#include <fmt/ranges.h>
-#include <fmt/ostream.h>
-#include <fmt/format.h>
-#include <range/v3/view/transform.hpp>
-#include <range/v3/view/span.hpp>
-#include <range/v3/view/iota.hpp>
-#include <range/v3/view/chunk.hpp>
-#include <range/v3/view/counted.hpp>
-#include <range/v3/range/conversion.hpp>
-#include <range/v3/algorithm/any_of.hpp>
-#include <range/v3/algorithm/sort.hpp>
-#include <range/v3/view/remove_if.hpp>
-#include <range/v3/algorithm/equal.hpp>
-#include <range/v3/view/take.hpp>
-#include <range/v3/view/unique.hpp>
-#include <range/v3/view/enumerate.hpp>
-#include <range/v3/numeric/accumulate.hpp>
-#include <range/v3/algorithm/copy.hpp>
-#include "range/v3/view/span.hpp"
-
 #include <mutex>
+#include <print>
+
+namespace ranges = std::ranges;
 
 bool generated(char32_t c) {
     const std::array ranges = {
@@ -121,7 +103,7 @@ template<typename R>
 auto substrings(R&& r) {
     std::mutex m;
     std::unordered_set<std::string_view, std::hash<std::string_view>> set;
-    std::for_each(std::execution::par_unseq, ranges::begin(r), ranges::end(r),
+    std::for_each(ranges::begin(r), ranges::end(r),
                       [&](const character_name& c) {
         for(const auto& b : c.bits()) {
             for(auto i : ranges::views::iota(std::size_t(1), b.second.size() + 1)) {
@@ -148,7 +130,7 @@ void inc(Map& map, K&& k) {
 
 template<typename Map>
 auto sorted_by_occurences(Map& map) {
-    auto v = map | ranges::to<std::vector<std::pair<typename Map::key_type, int>>>;
+    auto v = map | ranges::to<std::vector<std::pair<typename Map::key_type, int>>>();
     ranges::sort(v, std::greater<>{}, &std::pair<typename Map::key_type, int>::second);
     return v;
 }
@@ -172,26 +154,26 @@ void print_dict(std::FILE* f, const std::vector<block> & blocks) {
 
     int idx = 1;
     std::unordered_map<int, data> table;
-    fmt::print(f, "constexpr const char* __name_dict = \"");
+    std::print(f, "constexpr const char* __name_dict = \"");
     for(const auto& b: blocks) {
         for(const auto& str : b.data) {
             for(auto c : str) {
-                fmt::print(f, "{}", c);
+                std::print(f, "{}", c);
             }
         }
         table[idx++] = data{start, b.elem_size, b.data.size()};
         start += b.elem_size * b.data.size();
     }
-    fmt::print(f, "\";");
-    fmt::print(f,
+    std::print(f, "\";");
+    std::print(f,
                "constexpr std::string_view __get_name_segment(std::size_t b, std::size_t idx) {{");
-    fmt::print(f, "switch(b) {{");
+    std::print(f, "switch(b) {{");
     for(const auto& [k, v] : table) {
-        fmt::print(f, "case {}:", k);
-        fmt::print(f, "return std::string_view{{__name_dict + {0} + idx * {1}, {1} }};", v.start,
+        std::print(f, "case {}:", k);
+        std::print(f, "return std::string_view{{__name_dict + {0} + idx * {1}, {1} }};", v.start,
                    v.elem_size);
     }
-    fmt::print(f, "}} return {{}};}}");
+    std::print(f, "}} return {{}};}}");
 }
 void print_indexes(std::FILE* f,
                    const std::unordered_map<int, std::unordered_map<char32_t, uint64_t>>& mapping) {
@@ -202,12 +184,12 @@ void print_indexes(std::FILE* f,
     std::vector<uint64_t> data;
 
     auto sorted_mapping =
-        mapping | ranges::to<std::vector<std::pair<int, std::unordered_map<char32_t, uint64_t>>>>;
+        mapping | ranges::to<std::vector<std::pair<int, std::unordered_map<char32_t, uint64_t>>>>();
     ranges::sort(sorted_mapping, {},
                  &std::pair<int, std::unordered_map<char32_t, uint64_t>>::first);
 
     for(auto& [k, v] : sorted_mapping) {
-        auto arr = v | ranges::to<std::vector<std::pair<char32_t, uint64_t>>>;
+        auto arr = v | ranges::to<std::vector<std::pair<char32_t, uint64_t>>>();
         ranges::sort(arr, {}, &std::pair<char32_t, uint64_t>::first);
         for(auto& d : arr) {
             data.push_back(d.second);
@@ -216,40 +198,40 @@ void print_indexes(std::FILE* f,
         start = data.size();
     }
 
-    fmt::print(f, "constexpr uint64_t __name_indexes[] = {{");
+    std::print(f, "constexpr uint64_t __name_indexes[] = {{");
     for(auto& elem : data) {
-        fmt::print(f, "{:#018x},", elem);
+        std::print(f, "{:#018x},", elem);
     }
-    fmt::print(f, "0xFFFF'FFFF'FFFF'FFFF}};");
+    std::print(f, "0xFFFF'FFFF'FFFF'FFFF}};");
 
     for(const auto& [index, data] : ranges::views::enumerate(sorted_jump_table)) {
-        fmt::print(f, "constexpr uint64_t __name_indexes_{}[] = {{", index);
+        std::print(f, "constexpr uint64_t __name_indexes_{}[] = {{", index);
         bool first = true;
         char32_t prev = 0;
         size_t next_start = data.first;
         for(auto& c : data.second) {
             if(first || c.first != prev + 1) {
-                fmt::print(f, "{:#018x},", (uint64_t(prev + 1) << 32) | uint32_t(0xFFFFFFFF));
-                fmt::print(f, "{:#018x},", (uint64_t(c.first) << 32) | uint32_t(next_start));
+                std::print(f, "{:#018x},", (uint64_t(prev + 1) << 32) | uint32_t(0xFFFFFFFF));
+                std::print(f, "{:#018x},", (uint64_t(c.first) << 32) | uint32_t(next_start));
             }
             first = false;
             prev = c.first;
             next_start++;
         }
-        fmt::print(f, "{:#018x}}};", (uint64_t(prev + 1) << 32) | uint32_t(0xFFFFFFFF));
+        std::print(f, "{:#018x}}};", (uint64_t(prev + 1) << 32) | uint32_t(0xFFFFFFFF));
     }
 
-    fmt::print(f, "constexpr std::pair<const uint64_t* const, const uint64_t* const> "
+    std::print(f, "constexpr std::pair<const uint64_t* const, const uint64_t* const> "
                   "__get_table_index(std::size_t index) {{");
-    fmt::print(f, "switch(index) {{");
+    std::print(f, "switch(index) {{");
     for(const auto& [index, data] : ranges::views::enumerate(sorted_jump_table)) {
-        fmt::print(f, "case {}:", index);
-        fmt::print(f,
+        std::print(f, "case {}:", index);
+        std::print(f,
                    "return {{  __name_indexes_{0},  __name_indexes_{0} +  "
                    "sizeof(__name_indexes_{0})/sizeof(uint64_t) }};",
                    index);
     }
-    fmt::print(f, "}} return {{nullptr, nullptr}}; }}");
+    std::print(f, "}} return {{nullptr, nullptr}}; }}");
 }
 
 int main(int argc, char** argv) {
@@ -258,7 +240,7 @@ int main(int argc, char** argv) {
     auto names = data | ranges::views::transform([](const auto& p) {
                      return character_name{p.first, p.second, {}, 0};
                  }) |
-                 ranges::to<std::vector>;
+                 ranges::to<std::vector>();
 
     std::mutex m;
     std::unordered_map<std::string_view, int> all_used;
@@ -267,21 +249,21 @@ int main(int argc, char** argv) {
     auto end = names.end();
 
     while(true) {
-        end = std::partition(std::execution::par_unseq, names.begin(), end,
+        end = std::partition(names.begin(), end,
             [](const auto & a) {
                 return !a.complete();
             });
         auto incomplete = ranges::views::counted(names.begin(), std::size_t(ranges::distance(names.begin(), end)));
 
-        fmt::print("Count : {}\n", ranges::distance(incomplete));
+        std::print("Count : {}\n", ranges::distance(incomplete));
 
         if(ranges::empty(incomplete)) {
             break;
         }
 
         const auto subs = [&incomplete] {
-            auto tmp = substrings(incomplete) | ranges::to<std::vector>;
-            std::sort(std::execution::par_unseq, tmp.begin(), tmp.end(),
+            auto tmp = substrings(incomplete) | ranges::to<std::vector>();
+            std::sort(tmp.begin(), tmp.end(),
             [](const auto & a, const auto & b) {
                 return a.size() > b.size();
             });
@@ -297,10 +279,10 @@ int main(int argc, char** argv) {
         // Compute a list of all possible substrings for each char
         // the value is the distance
 
-        std::for_each(std::execution::par_unseq, incomplete.begin(), incomplete.end(),
+        std::for_each(incomplete.begin(), incomplete.end(),
                       [&used_substrings](const character_name& c) {
                 const auto bits = c.bits();
-                std::for_each(std::execution::par_unseq,
+                std::for_each(
                 ranges::begin(bits),
                 ranges::end(bits), [&used_substrings, &c](const auto & b) {
                         for(auto i : ranges::views::iota(std::size_t(0), b.second.size() + 1)) {
@@ -316,20 +298,20 @@ int main(int argc, char** argv) {
                     });
                 });
 
-        fmt::print("Substrings : {}\n", subs.size());
+        std::print("Substrings : {}\n", subs.size());
 
         std::vector<std::pair<std::string_view, double>> weighted_substrings =
-            used_substrings | ranges::views::remove_if([](const auto& p) {
-                return p.second == 0;
+            used_substrings | ranges::views::filter([](const auto& p) {
+                return p.second != 0;
             }) |
             ranges::views::transform([](const auto& p) {
                 const double d =
                     p.first.size() < 5 ? 1.0 : double(p.second) * p.first.size();
                 return std::pair<std::string_view, double>{p.first, d};
-            }) | ranges::to<std::vector>;
-        fmt::print("Used Substrings : {}\n", weighted_substrings.size());
+            }) | ranges::to<std::vector>();
+        std::print("Used Substrings : {}\n", weighted_substrings.size());
         const auto count = std::size_t(1 + 0.01 * double(weighted_substrings.size()));
-        fmt::print("{}", count);
+        std::print("{}", count);
         std::partial_sort(
             std::begin(weighted_substrings),
             std::begin(weighted_substrings) + count + 1,
@@ -339,7 +321,7 @@ int main(int argc, char** argv) {
         );
         auto filtered =
             weighted_substrings | ranges::views::take(count) |
-            ranges::views::transform([](const auto& p) { return p.first; }) | ranges::to<std::vector<std::string_view>>;
+            ranges::views::transform([](const auto& p) { return p.first; }) | ranges::to<std::vector<std::string_view>>();
 
         std::partial_sort(
             std::begin(filtered),
@@ -351,7 +333,7 @@ int main(int argc, char** argv) {
 
         std::mutex mutex;
         for(const auto& s : filtered | ranges::views::take(10)) {
-            std::for_each(std::execution::par_unseq,
+            std::for_each(
                          ranges::begin(incomplete),
                          ranges::end(incomplete),
             [&] (auto & c){
@@ -366,7 +348,7 @@ int main(int argc, char** argv) {
                 }
             });
         }
-        fmt::print("------\n");
+        std::print("------\n");
     }
     auto strings = sorted_by_occurences(all_used);
 
@@ -395,11 +377,11 @@ int main(int argc, char** argv) {
 
     std::size_t dict_size = 0;
     for(const auto& b : blocks_by_size) {
-        fmt::print("--- BLOCK : string size : {}, elements  {} -- total {} ({})\n",
+        std::print("--- BLOCK : string size : {}, elements  {} -- total {} ({})\n",
                    b.elem_size, b.size(), b.elem_size * b.data.size(),
         dict_size += (b.elem_size * b.data.size()) );
     }
-    fmt::print("Total blocks: {}\n", blocks_by_size.size());
+    std::print("Total blocks: {}\n", blocks_by_size.size());
 
     std::size_t index_bytes = 0;
     std::unordered_map<int, int> lengths;
@@ -409,13 +391,18 @@ int main(int argc, char** argv) {
     }
 
     auto sorted_lengths = sorted_by_occurences(lengths);
-    // fmt::print("DICT : \n{}\n ----", strings);
-    fmt::print("LENGTHS : \n{}\n ----", sorted_lengths);
-    fmt::print("KBytes: {}  ( dict {}  + index : {} )\n", (index_bytes + dict_size) / 1024.0,
+    // std::print("DICT : \n{}\n ----", strings);
+    std::print("LENGTHS : \n");
+    for (const auto& [key, occurrences] : sorted_lengths) {
+        std::print("({}, {})", key, occurrences);
+    }
+    std::print("\n ----");
+
+    std::print("KBytes: {}  ( dict {}  + index : {} )\n", (index_bytes + dict_size) / 1024.0,
                dict_size / 1024.0, index_bytes / 1024.0);
 
     auto f = fopen(argv[2], "w");
-    fmt::print(f, "#pragma once\n#include <string_view>\n#include <array>\n\n");
+    std::print(f, "#pragma once\n#include <string_view>\n#include <array>\n\n");
 
     print_dict(f, blocks_by_size);
 
