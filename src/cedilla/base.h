@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <string_view>
+#include <cstdint>
 
 namespace uni::detail {
 
@@ -72,7 +73,7 @@ struct compact_range {
     std::uint32_t _data[N];
     constexpr T value(char32_t cp, T default_value) const {
         const auto end = std::end(_data);
-        auto it = detail::upper_bound(std::begin(_data), end, cp, [](char32_t local_cp, uint32_t v) {
+        auto it = detail::upper_bound(std::begin(_data), end, cp, [](char32_t local_cp, std::uint32_t v) {
             char32_t c = (v >> 8);
             return local_cp < c;
         });
@@ -91,7 +92,7 @@ struct compact_list {
     std::uint32_t _data[N];
     constexpr T value(char32_t cp, T default_value) const {
         const auto end = std::end(_data);
-        auto it = detail::lower_bound(std::begin(_data), end, cp, [](uint32_t v, char32_t local_cp) {
+        auto it = detail::lower_bound(std::begin(_data), end, cp, [](std::uint32_t v, char32_t local_cp) {
             char32_t c = (v >> 8);
             return c < local_cp;
         });
@@ -119,9 +120,9 @@ using array_t = typename array<T, N>::type;
 
 
 
-template<std::size_t r1_s, std::size_t r2_s, int16_t r2_t_f, int16_t r2_t_b, std::size_t r3_s,
-         std::size_t r4_s, int16_t r4_t_f, int16_t r4_t_b, std::size_t r5_s, int16_t r5_t_f,
-         int16_t r5_t_b, std::size_t r6_s>
+template<std::size_t r1_s, std::size_t r2_s, std::int16_t r2_t_f, std::int16_t r2_t_b, std::size_t r3_s,
+         std::size_t r4_s, std::int16_t r4_t_f, std::int16_t r4_t_b, std::size_t r5_s, std::int16_t r5_t_f,
+         std::int16_t r5_t_b, std::size_t r6_s>
 struct bool_trie {
 
     // not tries, just bitmaps for all code points 0..0x7FF (UTF-8 1- and 2-byte sequences)
@@ -206,7 +207,7 @@ struct range_array {
     std::uint32_t _data[N];
     constexpr bool lookup(char32_t cp) const {
         const auto end = std::end(_data);
-        auto it = detail::upper_bound(std::begin(_data), end, cp, [](char32_t local_cp, uint32_t v) {
+        auto it = detail::upper_bound(std::begin(_data), end, cp, [](char32_t local_cp, std::uint32_t v) {
             char32_t c = (v >> 8);
             return local_cp < c;
         });
@@ -269,7 +270,7 @@ struct pair
 template <typename A, typename B>
 pair(A, B) -> pair<A, B>;
 
-struct string_with_idx { const char* name; uint32_t value; };
+struct string_with_idx { const char* name; std::uint32_t value; };
 
 
 }    // namespace uni::detail
@@ -292,7 +293,7 @@ constexpr bool numeric_value::is_valid() const {
     return _d != 0;
 }
 
-constexpr numeric_value::numeric_value(long long n, int16_t d) : _n(n), _d(d) {}
+constexpr numeric_value::numeric_value(long long n, std::int16_t d) : _n(n), _d(d) {}
 
 
 }    // namespace uni

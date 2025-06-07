@@ -127,7 +127,7 @@ constexpr version cp_age(char32_t cp) {
 
 constexpr block cp_block(char32_t cp) {
     const auto end = std::end(detail::tables::block_data._data);
-    auto it = detail::upper_bound(std::begin(detail::tables::block_data._data), end, cp, [](char32_t cp_, uint32_t v) {
+    auto it = detail::upper_bound(std::begin(detail::tables::block_data._data), end, cp, [](char32_t cp_, std::uint32_t v) {
         char32_t c = (v >> 8);
         return cp_ < c;
     });
@@ -263,7 +263,7 @@ constexpr numeric_value cp_numeric_value(char32_t cp) {
        }())) {
         return {};
     }
-    int16_t d = 1;
+    std::int16_t d = 1;
     detail::get_numeric_value(cp, detail::tables::numeric_data_d, d);
     return numeric_value(res, d);
 }
